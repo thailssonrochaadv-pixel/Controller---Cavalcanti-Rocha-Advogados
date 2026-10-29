@@ -147,7 +147,7 @@ const NM={t:'Dr. Thailsson',l:'Dra. Luana'},RESP=['Dr. Thailsson','Dra. Luana','
 /* ===== filtro por responsável ===== */
 const RMAP={'Thailsson':'Dr. Thailsson','Luana':'Dra. Luana'},RN=v=>RMAP[v]||v||'Ambos';
 let RF='all';try{RF=localStorage.getItem('ctl-rf')||'all'}catch(e){}
-const RM=r=>RF=='all'||!r||RN(r.resp)==RF;
+const RM=r=>{if(RF=='all'||!r)return true;const v=RN(r.resp);return v==RF||(v=='Ambos'&&RF!='Ambos')};
 const RFT=['painel','hoje','mes','prazos','aud','imp','reu','ctl'],RFD=['prazos','aud','imp','reu','ctl'];
 const fixResp=()=>{try{['cli','prc','aud','reu','imp','fin'].forEach(k=>(S[k]||[]).forEach(r=>{r.resp=RN(r.resp)}));['proc','adm'].forEach(k=>(S.pz[k]||[]).forEach(r=>{r.resp=RN(r.resp);if(r.por)r.por=RN(r.por)}))}catch(e){}};
 const RFBAR=()=>RFT.includes(S.tab)?'<div class="chips" id="rfbar"><span class="mut">👤 Responsável</span>'+[['all','Todos'],['Dr. Thailsson','Dr. Thailsson'],['Dra. Luana','Dra. Luana'],['Ambos','Ambos']].map(([v,l])=>'<button class="'+(RF==v?'on':'')+'" data-rf="'+v+'">'+l+'</button>').join('')+'</div>':'';
@@ -190,8 +190,8 @@ const SB=(p,fs)=>{const o=ORD[p]||{},op=fs?fs.filter(f=>!f.a).map(f=>[f.k,f.l]):
 const ENC=c=>c.sit=='Contrato encerrado',FIN=x=>['Arquivado','Encerrado'].includes(x.fase);
 const CFIL=c=>(FIL.c=='e')==ENC(c),PFIL=x=>(FIL.p=='f')==FIN(x);
 const TG=(k,a,b,n1,n2)=>`<div class="chips"><button class="${FIL[k]!=b?'on':''}" data-fil="${k}:${a}">${n1}</button><button class="${FIL[k]==b?'on':''}" data-fil="${k}:${b}">${n2}</button></div>`;
-const TBC=()=>TG('c','a','e','Ativos ('+S.cli.filter(c=>!ENC(c)).length+')','📁 Contratos encerrados ('+S.cli.filter(ENC).length+')')+SB('cli');
-const TBP=()=>TG('p','a','f','Em curso ('+S.prc.filter(x=>!FIN(x)).length+')','🏁 Finalizados ('+S.prc.filter(FIN).length+')')+SB('prc');
+const TBC=()=>TG('c','a','e','Ativos ('+S.cli.filter(c=>!ENC(c)&&RM(c)).length+')','📁 Contratos encerrados ('+S.cli.filter(c=>ENC(c)&&RM(c)).length+')')+SB('cli');
+const TBP=()=>TG('p','a','f','Em curso ('+S.prc.filter(x=>!FIN(x)&&RM(x)).length+')','🏁 Finalizados ('+S.prc.filter(x=>FIN(x)&&RM(x)).length+')')+SB('prc');
 const grow=t=>{t.style.overflow='hidden';t.style.height='auto';t.style.height=Math.max(64,t.scrollHeight+2)+'px'};
 function AUTO(){document.querySelectorAll('#app textarea').forEach(grow);document.querySelectorAll('#app button[data-act=copen]').forEach(b=>{const c=b.parentElement;if(c.querySelector('.pen'))return;c.style.position='relative';b.style.paddingRight='44px';c.insertAdjacentHTML('beforeend','<button class="pen" style="position:absolute;top:8px;right:8px" data-act="cedit" data-id="'+b.dataset.id+'" title="Editar cadastro">✎</button>')});const n=document.querySelector('nav button.on');n&&n.scrollIntoView({inline:'center',block:'nearest'})}
 document.addEventListener('input',e=>{if(e.target.tagName=='TEXTAREA')grow(e.target)});
@@ -205,7 +205,7 @@ else if(d.soDir){const o=ORD[d.soDir]=ORD[d.soDir]||{};o.d=(o.d||1)*-1;render()}
 function enter(p){PROF=p;ME=NM[p];document.documentElement.dataset.p=p;document.getElementById('hd').innerHTML=HEAD[p];
 (document.querySelector('header .hr')||document.getElementById('hd')).insertAdjacentHTML('afterbegin','<button data-act="vw" title="Prazos: só os meus ou de todos">👤 Meus</button><button data-act="swp" title="Sair deste aparelho">🚪</button>');
 document.getElementById('entry').remove();document.title=NM[p]=='Luana'?'Luana Cavalcanti · Controller':'Thailsson Rocha · Controller';
-['a1','a2','a3','a4','a5','a6','a7','a8','a9'].forEach(id=>{const s=document.createElement('script');s.textContent=document.getElementById(id).textContent;document.body.appendChild(s)})}
+['a1','a2','a3','a4','a5','a6','a7','a8','a9','a10'].forEach(id=>{const s=document.createElement('script');s.textContent=document.getElementById(id).textContent;document.body.appendChild(s)})}
 
 const gdBoot=async()=>{await gdRestore();document.getElementById('lgt').src=PIC.t;document.getElementById('lgl').src=PIC.l;const s=gdSess();if(s&&s.t&&(s.p=='t'||s.p=='l')&&NM[s.p]){enter(s.p);return}loginUI()};
 if(document.readyState=='loading')document.addEventListener('DOMContentLoaded',gdBoot);else gdBoot();
@@ -409,18 +409,18 @@ S.aud.forEach(r=>f(r)&&o.push([r.dt||'9',`⚖️ Audiência ${fm(r.dt)} ${r.hr||
 S.reu.forEach(r=>f(r)&&o.push([r.dt||'9',`🤝 Reunião ${fm(r.dt)} ${r.hr||''}`]));
 S.imp.forEach(r=>f(r)&&o.push([r.ini||'9',`🔁 ${esc(r.acao)} · ${esc(r.rev)} · ${r.pr}`]));
 return o.length?o.sort((a,b)=>a[0].localeCompare(b[0])).map(x=>`<div class="row">${x[1]}</div>`).join(''):'<span class="mut">Nada vinculado ainda.</span>'};
-const PC=i=>{const r=S.prc[i],p='prc.'+i;return `<div class="card"><div class="fg">${FD(p+'.num','Nº do processo',{w:2})}${FD(p+'.cli','Cliente',{s:[['','— selecione —'],...S.cli.map(c=>[c.id,c.nome||'(sem nome)'])],w:2})}${FD(p+'.jur','Jurisdição / Vara / Tribunal',{w:2})}${FD(p+'.mat','Matéria',{s:MAT})}${FD(p+'.val','Valor da causa (R$)')}${FD(p+'.pc','Parte contrária',{w:2})}${FD(p+'.pol','Polo do cliente',{s:['Ativo','Passivo','Terceiro']})}${FD(p+'.aj','Data de ajuizamento',{t:'date'})}${FD(p+'.fase','Situação',{s:['Em andamento','Suspenso','Em grau recursal','Em execução','Arquivado','Encerrado']})}${FD(p+'.resp','Responsável',{s:RESP})}${FD(p+'.link','Link do processo (PJe / e-SAJ / Drive)',{w:2})}${FD(p+'.obs','Observações',{a:1,w:3})}</div><div class="row" style="flex-wrap:wrap">${/^https?:/.test(r.link||'')?`<a class="wa" target="_blank" href="${esc(r.link)}">🔗 Abrir processo</a>`:''}${r.cli?`<button data-act="copen" data-id="${r.cli}">👤 ${esc(cn(r.cli))}</button>`:''}</div><p>Esta semana: ${CH(ACT(x=>x.pid==r.id))}</p><details><summary class="mut">🔗 Atividade vinculada</summary>${ACTL(x=>x.pid==r.id)}</details><button class="x" data-act="xdel" data-k="prc" data-i="${i}">🗑️ remover processo</button></div>`};
+const PC=i=>{const r=S.prc[i],p='prc.'+i;return `<div class="card" id="pc-${r.id}">${window.INCB?window.INCB(r):''}<div class="fg">${FD(p+'.num','Nº do processo',{w:2})}${FD(p+'.cli','Cliente',{s:[['','— selecione —'],...S.cli.map(c=>[c.id,c.nome||'(sem nome)'])],w:2})}${FD(p+'.jur','Jurisdição / Vara / Tribunal',{w:2})}${FD(p+'.mat','Matéria',{s:MAT})}${FD(p+'.val','Valor da causa (R$)')}${FD(p+'.pc','Parte contrária',{w:2})}${FD(p+'.pol','Polo do cliente',{s:['Ativo','Passivo','Terceiro']})}${FD(p+'.aj','Data de ajuizamento',{t:'date'})}${FD(p+'.fase','Situação',{s:['Em andamento','Suspenso','Em grau recursal','Em execução','Arquivado','Encerrado']})}${FD(p+'.etapa','Fase do processo',{s:window.ETP||['']})}${FD(p+'.resp','Responsável',{s:RESP})}${FD(p+'.link','Link do processo (PJe / e-SAJ / Drive)',{w:2})}${FD(p+'.obs','Observações',{a:1,w:3})}</div><div class="row" style="flex-wrap:wrap">${/^https?:/.test(r.link||'')?`<a class="wa" target="_blank" href="${esc(r.link)}">🔗 Abrir processo</a>`:''}${r.cli?`<button data-act="copen" data-id="${r.cli}">👤 ${esc(cn(r.cli))}</button>`:''}</div>${window.INCP?window.INCP(r,i):''}<p>Esta semana: ${CH(ACT(x=>x.pid==r.id))}</p><details><summary class="mut">🔗 Atividade vinculada</summary>${ACTL(x=>x.pid==r.id)}</details><button class="x" data-act="xdel" data-k="prc" data-i="${i}">🗑️ remover processo</button></div>`};
 const CL=()=>`<div class="card"><div class="row"><h2 style="margin:0;flex:1">👥 Clientes (${S.cli.filter(RM).length})</h2><button class="pri" data-new="cli">＋ novo cliente</button></div>${TBC()}<p class="mut">Toque no cliente para abrir perfil, processos e a atividade da semana (seg–dom).</p></div>`+(S.cli.slice().filter(c=>CFIL(c)&&RM(c)).sort((a,b)=>CMP('cli',a,b)||(a.nome||'').localeCompare(b.nome||'')).map(c=>`<div class="card"><button style="width:100%;text-align:left" data-act="copen" data-id="${c.id}"><b>${esc(c.nome)||'(sem nome)'}</b> <span class="mut">· ${S.prc.filter(p=>p.cli==c.id).length} processo(s)</span>${c.resp?`<span class="mut"> · 👤 ${esc(c.resp)}</span>`:''}</button><p style="margin:6px 0 0">${CH(ACT(x=>x.cid==c.id))}</p></div>`).join('')||'<p class="mut">Nenhum cliente cadastrado.</p>');
 const CP=()=>{const i=S.cli.findIndex(c=>c.id==S.cid);if(i<0){S.cid='';return CL()}const c=S.cli[i],p='cli.'+i,ps=S.prc.map((x,j)=>[x,j]).filter(([x])=>x.cli==c.id);
 return `<div class="card"><div class="row"><button data-act="cback">◀ Clientes</button><h2 style="margin:0;flex:1">${esc(c.nome)||'Novo cliente'}</h2><button class="pri" data-new="prc" data-c="${c.id}">＋ novo processo</button></div><div class="fg">${FD(p+'.nome','Nome / Razão social',{w:2})}${FD(p+'.resp','Responsável',{s:RESP})}${FD(p+'.sit','Situação do contrato',{s:['Ativo','Contrato encerrado']})}${FD(p+'.tipo','Tipo',{s:['Pessoa física','Pessoa jurídica']})}${FD(p+'.doc','CPF / CNPJ')}${FD(p+'.tel','Telefone / WhatsApp')}${FD(p+'.mail','E-mail',{w:2})}${FD(p+'.ctt','Contato / responsável (PJ)',{w:2})}${FD(p+'.des','Cliente desde',{t:'date'})}${FD(p+'.end','Endereço',{w:3})}${FD(p+'.hon','Honorários / contrato',{w:2})}${FD(p+'.drive','📁 Pasta do Drive (cole o link)',{w:3})}${FD(p+'.obs','Observações',{a:1,w:3})}</div><div class="row" style="flex-wrap:wrap">${wa(c)}${/^https?:/.test(c.drive||'')?`<a class="wa" target="_blank" href="${esc(c.drive)}">📁 Abrir pasta no Drive</a>`:''}</div><p>Esta semana: ${CH(ACT(x=>x.cid==c.id))}</p></div><div class="card"><h2>🔗 Atividade vinculada</h2>${ACTL(x=>x.cid==c.id)}</div><h2 style="margin:12px 2px 6px">⚖️ Processos (${ps.length})</h2>${ps.map(([x,j])=>PC(j)).join('')}<p><button class="pri" data-new="prc" data-c="${c.id}">＋ novo processo deste cliente</button> <button class="x" data-act="xdel" data-k="cli" data-i="${i}">🗑️ remover cliente</button></p>`};
-const PL=()=>{const f=S.pf||'';return `<div class="card"><div class="row"><h2 style="margin:0;flex:1">⚖️ Processos (${S.prc.length})</h2><button class="pri" data-new="prc" data-c="${f}">＋ novo processo</button></div><label class="fl">Filtrar por cliente<select data-p="pf">${op([['','Todos'],...S.cli.map(c=>[c.id,c.nome||'(sem nome)'])],f)}</select></label></div>`+TBP()+(S.prc.map((x,j)=>[x,j]).filter(([x])=>(!f||x.cli==f)&&PFIL(x)).sort(([a],[b])=>CMP('prc',a,b)).map(([x,j])=>PC(j)).join('')||'<p class="mut">Nenhum processo.</p>')};
-V.ctl=()=>{const s=S.ctl||'cli';return `<div class="card"><div class="row" style="flex-wrap:wrap"><button class="${s=='cli'?'on':''}" data-act="csub" data-n="cli">👥 Clientes (${S.cli.filter(RM).length})</button><button class="${s=='prc'?'on':''}" data-act="csub" data-n="prc">⚖️ Processos (${S.prc.length})</button></div></div>`+(s=='cli'?(S.cid?CP():CL()):PL())};
+const PL=()=>{const f=S.pf||'';return `<div class="card"><div class="row"><h2 style="margin:0;flex:1">⚖️ Processos (${S.prc.filter(RM).length})</h2><button class="pri" data-new="prc" data-c="${f}">＋ novo processo</button></div><label class="fl">Filtrar por cliente<select data-p="pf">${op([['','Todos'],...S.cli.map(c=>[c.id,c.nome||'(sem nome)'])],f)}</select></label></div>`+TBP()+(S.prc.map((x,j)=>[x,j]).filter(([x])=>(!f||x.cli==f)&&PFIL(x)).sort(([a],[b])=>CMP('prc',a,b)).map(([x,j])=>PC(j)).join('')||'<p class="mut">Nenhum processo.</p>')};
+V.ctl=()=>{const s=S.ctl||'cli';return `<div class="card"><div class="row" style="flex-wrap:wrap"><button class="${s=='cli'?'on':''}" data-act="csub" data-n="cli">👥 Clientes (${S.cli.filter(RM).length})</button><button class="${s=='prc'?'on':''}" data-act="csub" data-n="prc">⚖️ Processos (${S.prc.filter(RM).length})</button></div></div>`+(s=='cli'?(S.cid?CP():CL()):PL())};
 V.imp=()=>`<div class="card"><div class="row"><h2 style="margin:0;flex:1">🔁 Impulsionar / Acompanhar (${S.imp.filter(RM).length})</h2><button class="pri" data-new="imp">＋ novo item</button></div><p class="mut">Processos para <b>impulsionar</b> ou <b>acompanhar</b>. Cada item aparece em <b>Hoje</b> e em <b>Mês</b> dentro do período definido, repetindo no intervalo escolhido. Vincule a um processo cadastrado para preencher número, cliente e jurisdição automaticamente.</p></div>`+CARDS('imp',[{k:'proc',l:'Nº do processo',w:2},{k:'nome',l:'Cliente',w:2},{k:'jur',l:'Jurisdição',w:2},{k:'acao',l:'Ação',s:['Impulsionar','Acompanhar']},{k:'pr',l:'Prioridade',s:PRI},{k:'ini',l:'Aparecer a partir de',t:'date'},{k:'fim',l:'Até (opcional)',t:'date'},{k:'rev',l:'Repetir',s:REV},{k:'resp',l:'Responsável',s:RESP}],{proc:'',nome:'',jur:'',acao:'Impulsionar',pr:'🟡 Média',ini:td(),fim:'',rev:'Todo dia',pid:'',cid:'',resp:ME},'novo item',(r,i)=>LK('imp.'+i,r));
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,d=b.dataset;
 if(a=='csub'){S.ctl=d.n;S.cid='';ED.clear()}else if(a=='copen'){S.tab='ctl';S.ctl='cli';S.cid=d.id;ED.clear()}else if(a=='cback'){S.cid='';ED.clear()}
 else if(a=='newc'){const c={id:uid(),nome:'',tipo:'Pessoa física',doc:'',tel:'',mail:'',ctt:'',des:td(),end:'',hon:'',drive:'',obs:''};S.cli.push(c);S.cid=c.id;ED.clear();ED.add('cli.'+(S.cli.length-1))}
 else if(a=='newp'){S.prc.push({id:uid(),num:'',cli:d.c||'',jur:'',val:'',mat:'Tributário',pc:'',aj:'',pol:'Ativo',fase:'Em andamento',link:'',obs:''});ED.add('prc.'+(S.prc.length-1))}
-else if(a=='xdel'){const k=d.k,x=S[k][+d.i];if(!confirm('Remover '+(k=='cli'?'este cliente? Os processos dele continuam cadastrados, sem cliente.':'este processo?')))return;S[k].splice(+d.i,1);ED.clear();if(k=='cli'){S.cid='';S.prc.forEach(p=>{if(p.cli==x.id)p.cli=''})}}
+else if(a=='xdel'){const k=d.k,x=S[k][+d.i];if(!confirm('Remover '+(k=='cli'?'este cliente? Os processos dele continuam cadastrados, sem cliente.':'este processo?'+(S.prc.some(p=>p.pai==x.id)?' Os recursos/incidentes vinculados continuam cadastrados, sem vínculo.':''))))return;S[k].splice(+d.i,1);ED.clear();if(k=='prc')S.prc.forEach(p=>{if(p.pai==x.id)p.pai=''});if(k=='cli'){S.cid='';S.prc.forEach(p=>{if(p.cli==x.id)p.cli=''})}}
 else return;save();render();if(a!='newp'&&a!='xdel')scrollTo(0,0)});
 document.addEventListener('input',e=>{const t=e.target,lk=t.dataset.lk;if(!lk)return;const o=get(lk),p=S.prc.find(x=>x.id==o.pid);
 if(t.dataset.w=='p'&&p){o.cid=p.cli;if(lk.startsWith('imp')){o.proc=p.num;o.nome=cn(p.cli);o.jur=p.jur}}
@@ -436,11 +436,11 @@ const U=window.UI,uid=U.uid,op=U.op,cn=U.cn,MAT=U.MAT,PRI=U.PRI,REV=U.REV;
 const PRZ=[['1','🟢 Baixa'],['2','🟡 Média'],['3','🔴 Alta']];
 const FASE=['Em andamento','Suspenso','Em grau recursal','Em execução','Arquivado','Encerrado'];
 const PAIR=a=>a.map(x=>Array.isArray(x)?x:[x,x]);
-let cur='',DR={},tt;
-const blkLink=()=>{const ps=S.prc.filter(x=>!DR.cid||x.cli==DR.cid);return `<label class="fl" style="grid-column:span 2">👤 Cliente<select name="cid" data-dyn>${op([['','— nenhum —'],...S.cli.map(c=>[c.id,c.nome||'(sem nome)'])],DR.cid||'')}</select></label><label class="fl" style="grid-column:span 2">📁 Processo cadastrado<select name="pid" data-dyn>${op([['','— nenhum —'],...ps.map(x=>[x.id,(x.num||'(sem nº)')+(!DR.cid&&x.cli?' · '+cn(x.cli):'')])],DR.pid||'')}</select></label>`};
+let cur='',DR={},tt,DUPOK='';
+const blkLink=()=>{const ps=S.prc.filter(x=>!DR.cid||x.cli==DR.cid);return `<label class="fl" style="grid-column:span 2">👤 Cliente<select name="cid" data-dyn>${op([['','— nenhum —'],...S.cli.map(c=>[c.id,c.nome||'(sem nome)'])],DR.cid||'')}</select></label><label class="fl" style="grid-column:span 2">📁 Processo cadastrado<select name="pid" data-dyn>${op([['','— nenhum —'],...ps.map(x=>[x.id,(x.pai?'↳ '+(x.inc||'recurso')+' · ':'')+(x.num||'(sem nº)')+(!DR.cid&&x.cli?' · '+cn(x.cli):'')])],DR.pid||'')}</select></label>`};
 const blkAud=()=>{const c=DR.cad||'Sim';return `<label class="fl" style="grid-column:1/-1">📁 Processo cadastrado?<select name="cad" data-dyn>${op([['Sim','Sim — escolher o processo do cliente'],['Não','Não — digitar o número']],c)}</select></label>`+(c=='Sim'?(S.prc.length?blkLink():'<p class="mut" style="grid-column:1/-1;margin:0">Nenhum processo cadastrado ainda. Escolha “Não” para digitar o número.</p>'):`<label class="fl" style="grid-column:1/-1">Nº do processo<input name="ptxt" value="${esc(DR.ptxt||'')}"></label>`)};
 const ctl=f=>{const v=DR[f.k]!==undefined?DR[f.k]:'',fc=f.foc?' data-foc':'';
- if(f.s)return `<select name="${f.k}">${op(PAIR(f.s),String(v))}</select>`;
+ if(f.s)return `<select name="${f.k}"${f.dyn?' data-dyn':''}>${op(PAIR(f.s),String(v))}</select>`;
  if(f.a)return `<textarea name="${f.k}" style="min-height:64px">${esc(v)}</textarea>`;
  return `<input ${f.t?`type="${f.t}" `:''}name="${f.k}" value="${esc(v)}"${fc}>`};
 const K={
@@ -470,9 +470,16 @@ cli:{t:'👥 Novo cliente',ok:'Cliente cadastrado',tab:'Gestão',
  chk:D=>(D.nome||'').trim()?'':'Informe o nome do cliente.',
  add:D=>S.cli.push({id:uid(),resp:D.resp||ME,sit:'Ativo',nome:D.nome.trim(),tipo:D.tipo,doc:D.doc,tel:D.tel,mail:D.mail,ctt:D.ctt,des:D.des,end:D.end,hon:D.hon,drive:D.drive,obs:D.obs})},
 prc:{t:'📁 Novo processo',ok:'Processo cadastrado',tab:'Gestão',
- f:()=>[{k:'num',l:'Nº do processo',w:2,foc:1},{k:'cli',l:'Cliente',s:[['','— selecione —'],...S.cli.map(c=>[c.id,c.nome||'(sem nome)'])],w:2},{k:'jur',l:'Jurisdição / Vara / Tribunal',w:2},{k:'mat',l:'Matéria',s:MAT,v:'Tributário'},{k:'val',l:'Valor da causa (R$)'},{k:'pc',l:'Parte contrária',w:2},{k:'pol',l:'Polo do cliente',s:['Ativo','Passivo','Terceiro'],v:'Ativo'},{k:'aj',l:'Data de ajuizamento',t:'date'},{k:'fase',l:'Situação',s:FASE,v:'Em andamento'},{k:'resp',l:'Responsável',s:RESP,v:ME},{k:'link',l:'Link do processo (PJe / e-SAJ / Drive)',w:2},{k:'obs',l:'Observações',a:1,w:3}],
- chk:D=>(D.num||'').trim()?'':'Informe o número do processo.',
- add:D=>S.prc.push({id:uid(),resp:D.resp||ME,num:D.num.trim(),cli:D.cli||'',jur:D.jur,val:D.val,mat:D.mat,pc:D.pc,aj:D.aj,pol:D.pol,fase:D.fase,link:D.link,obs:D.obs})},
+ okf:D=>D.kind=='rec'?(D.rnum=='mesmo'?'Recurso registrado no processo originário':'Recurso cadastrado e vinculado'):'Processo cadastrado',
+ f:()=>{const rc=DR.kind=='rec',nv=DR.rnum!='mesmo',INC=window.INC||['Outro'],head={k:'kind',l:'Tipo de cadastro',s:[['p','Processo principal'],['rec','Recurso / incidente de um processo já cadastrado']],v:'p',w:3,dyn:1};
+  if(rc)return[head,{k:'pai',l:'Processo originário',s:[['','— selecione —'],...S.prc.map(x=>[x.id,(x.pai?'↳ ':'')+(x.num||'(sem nº)')+(x.cli?' · '+cn(x.cli):'')])],w:3,dyn:1},{k:'rtipo',l:'Tipo de recurso / incidente',s:INC,w:2},{k:'aj',l:'Data de interposição / distribuição',t:'date'},{k:'rnum',l:'Numeração do recurso',s:[['novo','Recebeu novo número'],['mesmo','Mesmo número do processo originário']],v:'novo',w:3,dyn:1},...(nv?[{k:'num',l:'Nº do novo processo (recurso)',w:2,foc:1},{k:'jur',l:'Tribunal / órgão julgador',w:2},{k:'resp',l:'Responsável',s:RESP,v:ME},{k:'link',l:'Link do processo (PJe / e-SAJ / Drive)',w:3}]:[{k:'jur',l:'Tribunal / órgão julgador (opcional)',w:3}]),{k:'obs',l:'Observações',a:1,w:3}];
+  return[head,{k:'num',l:'Nº do processo',w:2,foc:1},{k:'cli',l:'Cliente',s:[['','— selecione —'],...S.cli.map(c=>[c.id,c.nome||'(sem nome)'])],w:2},{k:'jur',l:'Jurisdição / Vara / Tribunal',w:2},{k:'mat',l:'Matéria',s:MAT,v:'Tributário'},{k:'val',l:'Valor da causa (R$)'},{k:'pc',l:'Parte contrária',w:2},{k:'pol',l:'Polo do cliente',s:['Ativo','Passivo','Terceiro'],v:'Ativo'},{k:'aj',l:'Data de ajuizamento',t:'date'},{k:'fase',l:'Situação',s:FASE,v:'Em andamento'},{k:'etapa',l:'Fase do processo',s:window.ETP||['']},{k:'resp',l:'Responsável',s:RESP,v:ME},{k:'link',l:'Link do processo (PJe / e-SAJ / Drive)',w:2},{k:'obs',l:'Observações',a:1,w:3}]},
+ chk:D=>{if(D.kind=='rec'){if(!D.pai)return'Escolha o processo originário.';if(D.rnum!='mesmo'&&!(D.num||'').trim())return'Informe o número do recurso (ou escolha “Mesmo número”).';return''}return(D.num||'').trim()?'':'Informe o número do processo.'},
+ add:D=>{if(D.kind=='rec'){const q=S.prc.find(x=>x.id==D.pai);if(!q)return;const tp=D.rtipo||(window.INC||['Recurso'])[0];
+   if(D.rnum=='mesmo'){(q.rec=q.rec||[]).push({id:uid(),tipo:tp,dt:D.aj||'',org:D.jur||'',obs:D.obs||''})}
+   else S.prc.push({id:uid(),resp:D.resp||q.resp||ME,num:D.num.trim(),cli:q.cli||'',jur:D.jur,val:'',mat:q.mat,pc:q.pc,aj:D.aj,pol:q.pol,fase:'Em andamento',link:D.link,obs:D.obs,pai:q.id,inc:tp,etapa:'Recursal'});
+   q.etapa='Recursal';if(q.fase=='Em andamento')q.fase='Em grau recursal';return}
+  S.prc.push({id:uid(),resp:D.resp||ME,num:D.num.trim(),cli:D.cli||'',jur:D.jur,val:D.val,mat:D.mat,pc:D.pc,aj:D.aj,pol:D.pol,fase:D.fase,etapa:D.etapa||'',link:D.link,obs:D.obs})}},
 leads:{t:'🧲 Novo lead',ok:'Lead cadastrado',tab:'Leads',
  f:()=>[{k:'nome',l:'Nome',w:2,foc:1},{k:'doc',l:'CPF / CNPJ'},{k:'tel',l:'Contato'},{k:'st',l:'Status',s:['Novo','Em contato','Proposta enviada','Fechado','Perdido'],v:'Novo'},{k:'dtf',l:'📅 Data do fechamento',t:'date'},{k:'res',l:'Resumo do caso',a:1,w:3},...FL],
  chk:D=>(D.nome||'').trim()?'':'Informe o nome do lead.',
@@ -486,13 +493,16 @@ function sync(){$$('#nwf').querySelectorAll('[name]').forEach(c=>{DR[c.name]=c.v
 function dyn(n){const p=S.prc.find(x=>x.id==DR.pid);
  if(n=='cid'){if(p&&p.cli!=DR.cid)DR.pid='';if(cur=='imp'&&DR.cid)DR.nome=cn(DR.cid)}
  else if(n=='pid'&&p){DR.cid=p.cli||DR.cid;if(cur=='imp'){DR.proc=p.num;DR.nome=cn(p.cli);DR.jur=p.jur}}
+ else if(n=='pai'){const q=S.prc.find(x=>x.id==DR.pai);if(q)DR.resp=q.resp||DR.resp}
  else if(n=='cad'&&DR.cad=='Não')DR.pid=''}
-function openNew(kind,pre){if(!K[kind])return;cur=kind;const k=K[kind];DR={};k.f().forEach(f=>{if(f.k)DR[f.k]=f.v!==undefined?f.v:''});Object.assign(DR,k.d?k.d():{},pre||{});
+function openNew(kind,pre){if(!K[kind])return;cur=kind;const k=K[kind];DR={};k.f().forEach(f=>{if(f.k)DR[f.k]=f.v!==undefined?f.v:''});Object.assign(DR,k.d?k.d():{},pre||{});if(DR.kind=='rec'&&DR.pai){const q=S.prc.find(x=>x.id==DR.pai);if(q)DR.resp=q.resp||DR.resp}DUPOK='';$$('[data-nwx=ok]').textContent='✔ OK';
  $$('#nwe').textContent='';draw();$$('#nw').classList.add('on');$$('.nwb').scrollTop=0;
  setTimeout(()=>{const e=$$('#nwf [data-foc]');e&&e.focus()},60)}
 function toast(m){const e=$$('#toast');e.textContent=m;e.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('on'),2800)}
 function ok(){sync();const k=K[cur],m=k.chk?k.chk(DR):'';if(m){$$('#nwe').textContent=m;return}
- k.add(DR);$$('#nw').classList.remove('on');save();render();toast('✅ '+k.ok+' · aba '+k.tab)}
+ const dm=window.DUPMSG?window.DUPMSG(cur,DR):'';
+ if(dm&&DUPOK!==dm){DUPOK=dm;$$('#nwe').textContent=dm+' Se for outro, toque em “Cadastrar mesmo assim”.';$$('[data-nwx=ok]').textContent='Cadastrar mesmo assim';return}
+ const okt=k.okf?k.okf(DR):k.ok;k.add(DR);DUPOK='';$$('#nw').classList.remove('on');save();render();toast('✅ '+okt+' · aba '+k.tab)}
 function cancel(){$$('#nw').classList.remove('on')}
 const fab=document.createElement('div');fab.id='fab';
 fab.innerHTML=`<div class="fm">${ITEMS.map(([k,i,l])=>`<button type="button" data-new="${k}"><span>${i}</span>${l}</button>`).join('')}</div><button type="button" class="fb" id="fb" aria-label="Cadastro rápido" aria-expanded="false" title="Cadastro rápido"></button>`;
@@ -507,7 +517,7 @@ window.fabSync=()=>{const on=true;fab.style.display=on?'':'none';document.body.c
 document.addEventListener('click',e=>{const t=e.target;
  if(t.closest('#fb'))return togFab();
  if(t.closest('#fv'))return closeFab();
- const n=t.closest('[data-new]');if(n){closeFab();return openNew(n.dataset.new,n.dataset.c?{cli:n.dataset.c}:{})}
+ const n=t.closest('[data-new]');if(n){closeFab();const pre={};if(n.dataset.c)pre.cli=n.dataset.c;if(n.dataset.pai){pre.kind='rec';pre.pai=n.dataset.pai}return openNew(n.dataset.new,pre)}
  const x=t.closest('[data-nwx]');if(x)x.dataset.nwx=='ok'?ok():cancel()});
 nw.addEventListener('change',e=>{const t=e.target;if(!t.hasAttribute('data-dyn'))return;const y=$$('.nwb').scrollTop;sync();dyn(t.name);draw();$$('.nwb').scrollTop=y});
 nw.addEventListener('keydown',e=>{if(e.key=='Enter'&&e.target.tagName=='INPUT')e.preventDefault(),ok()});
@@ -617,7 +627,7 @@ document.head.insertAdjacentHTML('beforeend','<style>@media print{body>*:not(#rp
 document.addEventListener('change',e=>{if(e.target.id!='cz-pre'||!e.target.value)return;const[t,n,m]=e.target.value.split('|');document.getElementById('cz-t').value=t;document.getElementById('cz-n').value=n;document.getElementById('cz-m').value=m});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-a5]');if(!b)return;const[a,j,k]=b.dataset.a5.split(':'),G=i=>document.getElementById(i);
 if(a=='czcalc'){const o={t:G('cz-t').value.trim(),pid:G('cz-pid').value,d:G('cz-d').value,k:G('cz-k').value,n:+G('cz-n').value||1,m:G('cz-m').value,b:G('cz-b').value=='1',f:G('cz-f').value,r:!!G('cz-r')&&G('cz-r').value=='1'};if(!o.d)return alert('Informe a data.');S.fer=o.f;const r=CALC(o);window.CZL={o,r};G('czr').innerHTML=`<div class="card q"><b>🚨 Prazo fatal: ${r.F(r.fim)}</b><br>🛡 Data de segurança (2 dias úteis antes): ${r.F(r.sg)}<details><summary>Memória de cálculo</summary>${r.lg.map(x=>'<div>• '+x+'</div>').join('')}</details><p class="mut">Confira o calendário do tribunal e a regra específica do ato antes de confiar na data.</p><button class="pri" data-a5="czmake">✔ Criar prazo no sistema</button></div>`}
-else if(a=='czmake'&&window.CZL){const{o,r}=window.CZL,p=S.prc.find(x=>x.id==o.pid);S.pz.proc.push({t:o.t||'Prazo',ini:td(),fim:ISO(r.sg),fat:ISO(r.fim),pr:'3'==='3'?3:3,done:false,pct:0,resp:ME,por:ME,pid:o.pid||'',cid:p?p.cli:''});save();render()}
+else if(a=='czmake'&&window.CZL){const{o,r}=window.CZL,p=S.prc.find(x=>x.id==o.pid);const dz=window.DUPMSG&&window.DUPMSG('prazo',{t:o.t||'Prazo',pid:o.pid||'',cid:p?p.cli:'',fat:ISO(r.fim)});if(dz&&!confirm(dz+'\n\nCadastrar mesmo assim?'))return;S.pz.proc.push({t:o.t||'Prazo',ini:td(),fim:ISO(r.sg),fat:ISO(r.fim),pr:'3'==='3'?3:3,done:false,pct:0,resp:ME,por:ME,pid:o.pid||'',cid:p?p.cli:''});save();render()}
 else if(a=='addand'){const r=S.prc[+j];r.and=r.and||[];r.and.push({d:td(),t:'Despacho',x:'',e:'',v:'Sim'});r.ver=td();save();render()}
 else if(a=='delan'){if(confirm('Excluir este andamento?')){S.prc[+j].and.splice(+k,1);save();render()}}
 else if(a=='ver'){S.prc[+j].ver=td();save();render()}
@@ -690,4 +700,38 @@ if(a=='impo'){if(G('impov'))return;const o=document.createElement('div');o.id='i
 else if(a=='impx'){const o=G('impov');o&&o.remove()}
 else if(a=='impt'){try{const r=IMPORT(JSON.parse(G('impt').value));S.upd=Date.now();save();render();const o=G('impov');o&&o.remove();const N={cli:'clientes',prc:'processos',pz:'prazos',aud:'audiências',reu:'reuniões',imp:'itens de Impulsionar/Acompanhar',leads:'leads',fin:'contratos'};alert('Importação concluída (nada foi apagado):\n'+Object.keys(N).map(k=>(r[k]||0)+' '+N[k]).join('\n'))}catch(x){alert('Texto inválido: '+x.message)}}
 });
+</script><script type="text/plain" id="a10">
+window.ETP=['','Postulatória','Instrutória','Sentença','Recursal','Cumprimento / Execução'];
+window.INC=['Agravo de instrumento','Agravo interno','Apelação','Embargos de declaração','Recurso especial','Recurso extraordinário','Agravo em REsp / RE','Embargos de divergência','Recurso ordinário','Recurso de revista','Recurso inominado','Recurso voluntário (CARF)','Recurso administrativo','Ação rescisória','Exceção de pré-executividade','Embargos à execução','Impugnação ao cumprimento de sentença','Incidente de desconsideração da personalidade jurídica','Outro incidente'];
+const NRM=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
+const DGT=s=>String(s||'').replace(/\D/g,'');
+const PKEY=n=>{const d=DGT(n);return d.length>=7?d:NRM(n)};
+const CNM=id=>(S.cli.find(c=>c.id==id)||{}).nome||'';
+function dPrc(num,id){const k=PKEY(num);return k?S.prc.find(x=>x.id!=id&&PKEY(x.num)==k)||null:null}
+function dCli(nome,doc,id){const n=NRM(nome),d=DGT(doc);let m=null,why='';S.cli.forEach(x=>{if(m||x.id==id)return;if(d.length>=11&&DGT(x.doc)==d){m=x;why='o mesmo CPF/CNPJ'}else if(n&&NRM(x.nome)==n){m=x;why='o mesmo nome'}});return m?{x:m,why}:null}
+function dPz(D,self){const t=NRM(D.t);if(!t)return null;return[...S.pz.proc,...S.pz.adm].find(x=>x!==self&&NRM(x.t)==t&&(D.pid?(x.pid==D.pid&&(!x.done||x.fat==D.fat)):(!x.pid&&(x.cid||'')==(D.cid||'')&&!!D.fat&&x.fat==D.fat)))||null}
+const mPrc=x=>'⚠️ Este processo já está cadastrado: nº '+(x.num||'')+(x.cli?' · cliente '+CNM(x.cli):'')+(x.pai?' (recurso/incidente)':'')+'.';
+const mCli=r=>'⚠️ Já existe um cliente com '+r.why+': '+(r.x.nome||'')+(r.x.doc?' · '+r.x.doc:'')+'.';
+const mPz=x=>'⚠️ Já existe um prazo igual para este processo: “'+(x.t||'')+'”'+(x.fat?' · fatal '+fd(x.fat):'')+(x.done?' (já cumprido)':'')+'.';
+window.DUPMSG=function(kind,D){try{
+ if(kind=='prc'){
+  if(D.kind=='rec'&&D.rnum=='mesmo'){const q=S.prc.find(x=>x.id==D.pai),t=D.rtipo||window.INC[0],x=q&&(q.rec||[]).find(r=>r.tipo==t&&(r.dt||'')==(D.aj||''));return x?'⚠️ Este recurso ('+x.tipo+(x.dt?' · '+fd(x.dt):'')+') já está registrado neste processo.':''}
+  const x=dPrc(D.num,'');return x?mPrc(x):''}
+ if(kind=='cli'){const r=dCli(D.nome,D.doc,'');return r?mCli(r):''}
+ if(kind=='prazo'){const x=dPz(D,null);return x?mPz(x):''}
+}catch(e){}return''};
+function tw(m){const t=document.getElementById('toast');if(!t)return;t.textContent=m;t.classList.add('on');clearTimeout(tw.h);tw.h=setTimeout(()=>t.classList.remove('on'),6000)}
+document.addEventListener('change',e=>{const p=e.target.dataset&&e.target.dataset.p;if(!p)return;let m;
+ if(m=/^prc\.(\d+)\.num$/.exec(p)){const r=S.prc[+m[1]],x=r&&dPrc(r.num,r.id);if(x)tw(mPrc(x))}
+ else if(m=/^cli\.(\d+)\.(nome|doc)$/.exec(p)){const r=S.cli[+m[1]],y=r&&dCli(r.nome,r.doc,r.id);if(y)tw(mCli(y))}
+ else if(m=/^pz\.(proc|adm)\.(\d+)\.(t|fat)$/.exec(p)){const r=S.pz[m[1]][+m[2]],x=r&&dPz(r,r);if(x)tw(mPz(x))}
+});
+window.INCB=function(r){if(!r.pai)return'';const q=S.prc.find(x=>x.id==r.pai);return'<div class="row" style="flex-wrap:wrap"><span>↳ <b>'+esc(r.inc||'Recurso / incidente')+'</b> do processo '+(q?esc(q.num||'(sem nº)'):'(removido)')+'</span>'+(q?'<button data-act="popen" data-id="'+q.id+'">⬆ abrir processo originário</button>':'')+'</div>'};
+window.INCP=function(r,i){const ch=S.prc.filter(x=>x.pai==r.id),rc=r.rec||[];if(r.etapa!='Recursal'&&!ch.length&&!rc.length)return'';const L=[];
+ ch.forEach(x=>L.push('<div class="row" style="flex-wrap:wrap">🔗 <b>'+esc(x.inc||'Recurso')+'</b> · nº '+esc(x.num||'(sem nº)')+' <span class="mut">novo número'+(x.aj?' · '+fd(x.aj):'')+(x.jur?' · '+esc(x.jur):'')+'</span> <button data-act="popen" data-id="'+x.id+'">abrir</button></div>'));
+ rc.forEach((x,j)=>L.push('<div class="row" style="flex-wrap:wrap">↩ <b>'+esc(x.tipo)+'</b> <span class="mut">mesmo número'+(x.dt?' · '+fd(x.dt):'')+(x.org?' · '+esc(x.org):'')+(x.obs?' · '+esc(x.obs):'')+'</span> <button class="x" data-act="recdel" data-i="'+i+'" data-j="'+j+'" title="Remover da lista">✕</button></div>'));
+ return'<div style="margin:8px 0;padding:8px;border:1px solid #8884;border-radius:8px"><b>⚖️ Recursos / incidentes ('+L.length+')</b>'+(L.join('')||'<p class="mut" style="margin:4px 0">Nenhum recurso registrado ainda.</p>')+'<button class="pri" data-new="prc" data-pai="'+r.id+'">＋ registrar recurso / incidente</button></div>'};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act=popen],[data-act=recdel]');if(!b)return;
+ if(b.dataset.act=='popen'){const x=S.prc.find(p=>p.id==b.dataset.id);if(!x)return;S.tab='ctl';S.ctl='prc';S.cid='';S.pf='';FIL.p=FIN(x)?'f':'a';ED.clear();render();setTimeout(()=>{const el=document.getElementById('pc-'+x.id);if(el){el.scrollIntoView({block:'center'});el.style.outline='2px solid #c9a35a';setTimeout(()=>{el.style.outline=''},2500)}},60)}
+ else{const x=S.prc[+b.dataset.i];if(!x||!x.rec||!confirm('Remover este recurso da lista?'))return;x.rec.splice(+b.dataset.j,1);save();render()}});
 </script></body></html>
