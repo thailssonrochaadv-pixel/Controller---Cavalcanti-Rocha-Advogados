@@ -329,7 +329,7 @@ else if(d.soDir){const o=ORD[d.soDir]=ORD[d.soDir]||{};o.d=(o.d||1)*-1;render()}
 function enter(p){PROF=p;ME=NM[p];document.documentElement.dataset.p=p;document.getElementById('hd').innerHTML=HEAD[p];
 (document.querySelector('header .hr')||document.getElementById('hd')).insertAdjacentHTML('afterbegin','<button data-act="swp" title="Trocar perfil">🔀</button>');
 document.getElementById('entry').remove();document.title=NM[p]=='Luana'?'Luana Cavalcanti · Controller':'Thailsson Rocha · Controller';
-['a1','a2','a3','a4','a5','a6','a7','a8','a9','a10','a11','a12','a13','a14','a15','a16','a17','a18'].forEach(id=>{const s=document.createElement('script');s.textContent=document.getElementById(id).textContent;document.body.appendChild(s)})}
+['a1','a2','a3','a4','a5','a6','a7','a8','a9','a10','a11','a12','a13','a14','a15','a16','a17','a18','a19'].forEach(id=>{const s=document.createElement('script');s.textContent=document.getElementById(id).textContent;document.body.appendChild(s)})}
 </script><script type="text/plain" id="a1">
 const iso=d=>new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
 const {A,T,G,HAB,WR,def}=PF[PROF];
@@ -468,7 +468,7 @@ for(let i=1;i<=n;i++){const d=`${mon}-${String(i).padStart(2,'0')}`,e=evs(d);c+=
 if(e.length)ag+=`<div class="card" style="padding:8px"><b>${String(i).padStart(2,'0')}/${String(m).padStart(2,'0')}</b> ${e.map(x=>`<div>${x.h||''} ${x.t} <span class="mut">${x.x||''}</span></div>`).join('')}</div>`}
 return `<div class="card"><div class="row"><button data-act="mon" data-n="-1">◀</button><h2 style="margin:0;flex:1;text-align:center">${new Date(y,m-1,1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}</h2><button data-act="mon" data-n="1">▶</button></div><div class="cal">${c}</div></div><h3>Agenda do mês</h3>${ag||'<p class="mut">Nada agendado.</p>'}`};
 V.prazos=()=>{const k=S.sub,fs=[{k:'t',l:'Descrição (processo, peça, parecer, conteúdo…)',w:2}].concat(k=='adm'?[{k:'tp',l:'Tipo',s:['Administrativo','Parecer','Relatório']}]:[],[{k:'resp',l:'Responsável',s:RESP},{k:'ini',l:'▶ Iniciar em',t:'date'},{k:'fim',l:'⏹ Terminar em',t:'date'},{k:'fat',l:'🚨 Prazo fatal',t:'date'},{k:'conf',l:'👁 Conferido por (2ª checagem)',s:['','Thailsson','Luana']}]);
-return `<div class="card"><div class="row" style="flex-wrap:wrap"><button class="${k=='proc'?'on':''}" data-act="sub" data-n="proc">⚖️ Prazo Processual (${S.pz.proc.length})</button><button class="${k=='adm'?'on':''}" data-act="sub" data-n="adm">🏛️ Administrativo, Pareceres e Relatórios (${S.pz.adm.length})</button><button class="pri" data-new="prazo" style="margin-left:auto">＋ novo prazo</button></div></div>`+
+return `<div class="card"><div class="row" style="flex-wrap:wrap"><button class="${k=='proc'?'on':''}" data-act="sub" data-n="proc">⚖️ Prazo Processual (${S.pz.proc.filter(r=>!r.done).length})</button><button class="${k=='adm'?'on':''}" data-act="sub" data-n="adm">🏛️ Administrativo, Pareceres e Relatórios (${S.pz.adm.filter(r=>!r.done).length})</button><button class="pri" data-new="prazo" style="margin-left:auto">＋ novo prazo</button></div></div>`+
 CARDS('pz.'+k,fs,{t:'',tp:'Administrativo',ini:td(),fim:'',fat:'',pr:2,done:false},'novo prazo',(r,i)=>`<div class="row">${r.por&&r.por!=r.resp?`<span class="mut">↪ de ${esc(r.por)}</span> `:''}Prioridade: ${[1,2,3].map(v=>`<button class="dot d${v} ${r.pr==v?'sel':''}" data-act="pr" data-p="pz.${k}.${i}.pr" data-v="${v}"></button>`).join('')}${bd(r)}<label class="row" style="margin-left:auto"><input type="checkbox" data-p="pz.${k}.${i}.done" ${r.done?'checked':''} data-r> ✅ Cumprido</label></div>`+PCT('pz.'+k+'.'+i+'.pct',r,1)+LK('pz.'+k+'.'+i,r),SPZ)};
 V.aud=()=>HDR('aud','⚖️ Audiências',S.aud.length,'＋ nova audiência')+CARDS('aud',[{k:'nome',l:'Nome da pessoa'},{k:'vara',l:'Julgador / Vara',w:2},{k:'dt',l:'Dia',t:'date'},{k:'hr',l:'Hora',t:'time'},{k:'mod',l:'Modalidade',s:MOD}],{proc:'',nome:'',vara:'',dt:'',hr:'',mod:'Presencial'},'nova audiência',(r,i)=>AP('aud.'+i,r),SDT);
 V.reu=()=>HDR('reu','🤝 Reuniões',S.reu.length,'＋ nova reunião')+CARDS('reu',[{k:'nome',l:'Nome da pessoa',w:2},{k:'tel',l:'Telefone'},{k:'mod',l:'Modalidade',s:MOD},{k:'dt',l:'Dia',t:'date'},{k:'hr',l:'Hora',t:'time'}],{nome:'',tel:'',mod:'Online',dt:'',hr:''},'nova reunião',(r,i)=>wa(r)+LK('reu.'+i,r),SDT);
@@ -1110,7 +1110,7 @@ function TLN(r){const id=r.id,it=[],t=td(),P=[...S.pz.proc,...S.pz.adm];
  (r.and||[]).forEach(a=>a.d&&it.push([a.d,'📜',a.t||'Andamento',a.x||a.e||'']));
  (r.rec||[]).forEach(a=>a.dt&&it.push([a.dt,'↩️',a.tipo||'Recurso',a.org||'']));
  S.prc.filter(x=>x.pai==id).forEach(x=>x.aj&&it.push([x.aj,'🔗',x.inc||'Recurso / incidente','nº '+cnjF(x.num)]));
- P.filter(z=>z.pid==id).forEach(z=>{if(z.done){const d=z.dc||z.fat||z.fim;d&&it.push([d,'✅','Prazo cumprido',z.t||''])}else{const d=z.fat||z.fim;d&&it.push([d,z.fat?'🚨':'⏱️',z.fat?'Prazo fatal':'Prazo',z.t||''])}});
+ P.filter(z=>z.pid==id).forEach(z=>{if(z.done){const d=z.dc||z.fat||z.fim;d&&it.push([d,'✅','Prazo cumprido'+(z.dby?' por '+z.dby:''),z.t||''])}else{const d=z.fat||z.fim;d&&it.push([d,z.fat?'🚨':'⏱️',z.fat?'Prazo fatal':'Prazo',z.t||''])}});
  S.aud.filter(a=>a.pid==id).forEach(a=>a.dt&&it.push([a.dt,'⚖️','Audiência',[a.hr,a.vara,a.mod].filter(Boolean).join(' · ')]));
  S.dil.filter(a=>a.pid==id).forEach(a=>a.dt&&it.push([a.dt,'📍',a.st=='Cumprida'?'Diligência cumprida':'Diligência',[a.tp,a.t].filter(Boolean).join(': ')]));
  S.desp.filter(a=>a.pid==id).forEach(a=>a.dt&&it.push([a.dt,'🧾','Despesa',(a.tp||'')+' · '+BRL(a.val)]));
@@ -1122,7 +1122,7 @@ function PXT(){document.querySelectorAll('#app .card[id^="pc-"]').forEach(cd=>{i
  const fg=cd.querySelector('.fg');fg&&fg.insertAdjacentHTML('beforebegin',hd);
  const P=[...S.pz.proc,...S.pz.adm].filter(z=>z.pid==id).sort((a,b)=>(!!a.done-!!b.done)||((a.fat||a.fim||'9')<(b.fat||b.fim||'9')?-1:1)),pn=P.filter(z=>!z.done).length;
  const D=S.dil.filter(x=>x.pid==id),X=S.desp.filter(x=>x.pid==id),xr=X.filter(PEND).reduce((s,x)=>s+(+x.val||0),0);
- const pz=P.map(z=>`<div class="row"><span style="flex:1">${z.done?'✅':z.fat?'🚨':'⏱️'} ${esc(z.t||'(sem título)')}</span>${z.done?B('cumprido','ok'):BD(z.fat||z.fim)}${z.fat&&!z.done?(z.conf?B('👁 conferido: '+esc(z.conf),'ok'):B('sem 2ª conferência','warn')):''}</div>`).join('')||'<p class="mut">Nenhum prazo vinculado.</p>';
+ const pz=P.map(z=>`<div class="row"><span style="flex:1">${z.done?'✅':z.fat?'🚨':'⏱️'} ${esc(z.t||'(sem título)')}</span>${z.done?B('✅ cumprido'+(z.dc?' '+fd(z.dc).slice(0,5):'')+(z.dby?' por '+esc(z.dby):''),'ok'):BD(z.fat||z.fim)}${z.fat&&!z.done?(z.conf?B('👁 conferido: '+esc(z.conf),'ok'):B('sem 2ª conferência','warn')):''}</div>`).join('')||'<p class="mut">Nenhum prazo vinculado.</p>';
  const dl=D.map(x=>`<div class="row"><span style="flex:1">📍 ${esc(x.t||x.tp)}</span>${DOPEN(x)?BD(x.dt):B(esc(x.st),'ok')}</div>`).join('');
  const blk=`<details class="x15pd" data-pj="${id}"${PXO.has(id)?' open':''}><summary>⏳ Prazos (${pn} pendente${pn==1?'':'s'}) · 📍 Diligências (${D.filter(DOPEN).length}) · 🧾 Despesas (${BRL(xr)} a reembolsar) · 🕒 Linha do tempo</summary>
 <div class="x15g"><div><h4>Prazos fatais e prazos vinculados</h4>${pz}<div class="chips"><button class="pri" data-x15="npz:${id}">＋ prazo para este processo</button></div>
@@ -1669,6 +1669,49 @@ function FINX(){const on=(S.tab=='ctl'&&S.ctl=='fin')?'hon':S.tab=='of'?'of':'';
  q?q.insertAdjacentHTML('afterend',h):ap.insertAdjacentHTML('afterbegin',h)}
 
 const _R4=render;render=function(){_R4();try{ORGB();CTLX();FINX()}catch(e){console.error(e)}};
+render();
+})();
+</script><script type="text/plain" id="a19">
+/* ===== v7 · prazos cumpridos fora da lista principal, agrupados por mês ===== */
+(()=>{
+const G=i=>document.getElementById(i),X=window.X15,B=X.B,cnjF=X.cnjF,prcOf=X.prcOf,cnm=X.cnm,NX=X.NX;
+let PZV='open';
+const MESES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const mlab=m=>{if(m=='0000-00')return'Sem data de cumprimento';const[y,mm]=m.split('-');return MESES[+mm-1].replace(/^./,c=>c.toUpperCase())+' de '+y};
+
+/* registra quem marcou como cumprido */
+document.addEventListener('input',e=>{const m=/^pz\.(proc|adm)\.(\d+)\.done$/.exec(e.target.dataset&&e.target.dataset.p||'');if(!m)return;const r=S.pz[m[1]][+m[2]];if(!r)return;
+ if(e.target.checked){r.dby=ME;setTimeout(()=>(window.tw||(()=>{}))('✅ Prazo cumprido. Ele foi para “Cumpridos” e continua registrado no processo.'),200)}else r.dby=''},true);
+
+function rowsDone(k){const L=S.pz[k].map((r,i)=>[r,i]).filter(([r])=>r.done&&RM(r));
+ L.sort(([a],[b])=>((b.dc||b.fat||b.fim||'')).localeCompare(a.dc||a.fat||a.fim||''));
+ const by={};L.forEach(x=>{const m=(x[0].dc||'').slice(0,7)||'0000-00';(by[m]=by[m]||[]).push(x)});return by}
+function viewDone(k){const by=rowsDone(k),ms=Object.keys(by).sort().reverse();
+ if(!ms.length)return '<div class="card" id="pzdone"><p class="mut" style="margin:0">Nenhum prazo cumprido ainda.</p></div>';
+ return `<div id="pzdone">${ms.map((m,ix)=>`<details class="card pzd-m"${ix==0?' open':''}><summary><b>${mlab(m)}</b> <span class="mut">· ${by[m].length} prazo${by[m].length==1?'':'s'}</span></summary>
+${by[m].map(([r,i])=>{const p=prcOf(r.pid),cl=r.cid?cnm(r.cid):(p?cnm(p.cli):'');const late=r.dc&&r.fat&&r.dc>r.fat;
+ return `<div class="row pzd-row" style="flex-wrap:wrap;gap:6px;padding:7px 0;border-top:1px solid var(--ln)"><span style="flex:1;min-width:200px">✅ <b>${esc(r.t||'(sem título)')}</b>${p?` <span class="mut">· Proc. ${esc(cnjF(p.num))}</span>`:''}${cl?` <span class="mut">· ${esc(cl)}</span>`:''}</span>
+${r.dc?B('cumprido '+fd(r.dc).slice(0,5),late?'warn':'ok'):''}${r.dby?B('por '+esc(r.dby),'gd'):''}${r.resp&&r.resp!=r.dby?B('resp. '+esc(r.resp),'mut'):''}${r.fat?B('fatal '+fd(r.fat).slice(0,5),'mut'):''}
+${p?`<button data-act="popen" data-id="${p.id}" title="Abrir o processo">📁</button>`:''}<button data-x19="reopen:${k}:${i}" title="Reabrir o prazo">↩ reabrir</button></div>`}).join('')}</details>`).join('')}</div>`}
+
+function PZX(){if(S.tab!='prazos'||G('pzv'))return;const k=S.sub||'proc',ap=G('app');
+ const nOpen=S.pz[k].filter(r=>!r.done&&RM(r)).length,nDone=S.pz[k].filter(r=>r.done&&RM(r)).length;
+ const head=[...ap.querySelectorAll('#app > .card')].find(c=>c.querySelector('[data-act=sub]'));if(!head)return;
+ head.insertAdjacentHTML('beforeend',`<div class="chips" id="pzv" style="margin-top:10px"><button class="${PZV=='open'?'on':''}" data-x19="v:open">⏳ Em aberto (${nOpen})</button><button class="${PZV=='done'?'on':''}" data-x19="v:done">✅ Cumpridos (${nDone})</button></div>`);
+ ap.querySelectorAll('#app > .card').forEach(c=>{const cb=c.querySelector(`input[type=checkbox][data-p^="pz.${k}."][data-p$=".done"]`);if(!cb)return;const m=new RegExp('^pz\\.'+k+'\\.(\\d+)\\.').exec(cb.dataset.p),r=m&&S.pz[k][+m[1]];if(!r)return;
+  const ed=ED.has('pz.'+k+'.'+m[1]);c.classList.toggle('sfh',PZV=='done'?!ed:(!!r.done&&!ed))});
+ if(PZV=='done'){const sortBar=[...ap.children].find(el=>el.querySelector&&el.querySelector('select')&&/Ordenar/.test(el.textContent)&&!el.classList.contains('card'));if(sortBar)sortBar.style.display='none';
+  head.insertAdjacentHTML('afterend',viewDone(k))}const q=G('qf');if(q)q.dispatchEvent(new Event('input',{bubbles:true}))}
+function filt(v){const w=NX(v).split(/\s+/).filter(Boolean);document.querySelectorAll('#pzdone .pzd-row').forEach(r=>{const t=NX(r.textContent);r.style.display=w.every(x=>t.includes(x))?'':'none'});
+ document.querySelectorAll('#pzdone .pzd-m').forEach(d=>{const any=[...d.querySelectorAll('.pzd-row')].some(r=>r.style.display!='none');d.style.display=any?'':'none';if(w.length&&any)d.open=true})}
+document.addEventListener('input',e=>{if(e.target.id=='qf'&&G('pzdone'))filt(e.target.value)});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-x19]');if(!b)return;const[a,k,i]=b.dataset.x19.split(':');
+ if(a=='v'){PZV=k;ED.clear();render();scrollTo(0,0);return}
+ if(a=='reopen'){const r=S.pz[k][+i];if(!r||!confirm('Reabrir o prazo “'+(r.t||'')+'”?'))return;r.done=false;r.dc='';r.dby='';(window.LOG||(()=>{}))('reabriu o prazo “'+(r.t||'')+'”');save();render();(window.tw||(()=>{}))('↩ Prazo reaberto');return}});
+/* ao trocar entre Processual e Administrativo, volta para “Em aberto” */
+document.addEventListener('click',e=>{if(e.target.closest('[data-act=sub]'))PZV='open'},true);
+
+const _R5=render;render=function(){_R5();try{PZX()}catch(e){console.error(e)}};
 render();
 })();
 </script></body></html>
